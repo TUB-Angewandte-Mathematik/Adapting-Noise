@@ -1,0 +1,12 @@
+torch>=2.0
+torchvision>=0.15
+torchdiffeq>=0.2.4
+geomloss>=0.2.6
+wandb>=0.15
+tqdm>=4.65
+numpy>=1.23
+matplotlib>=3.7
+PyYAML>=6.0
+scipy>=1.10
+POT>=0.8.2
+torch-fidelity>=0.3
