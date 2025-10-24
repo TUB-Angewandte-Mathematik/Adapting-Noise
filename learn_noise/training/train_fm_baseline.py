@@ -96,68 +96,7 @@ def _make_latent_sampler(name: str, *, device: torch.device, args: Optional[obje
 
         return _sample
 
-    if any(k in lname for k in {"stable", "alpha_stable", "alpha-stable"}):
-        # Allow "stable:1.5" etc.; default α=1.5
-        m = re.search(r"(?:stable|alpha[-_]?stable)[:_]?([0-9]*\.?[0-9]+)", lname)
-        alpha = float(m.group(1)) if m else 1.5
-        if not (0.0 < alpha <= 2.0):
-            raise ValueError(f"alpha must be in (0, 2], got {alpha}")
-
-        # α=2 reduces to Gaussian
-        if abs(alpha - 2.0) < 1e-12:
-            def _sample(shape): return torch.randn(*shape, device=device)
-            return _sample
-
-        gamma = alpha / 2.0  # index of positive-stable for the mixture
-
-        def _pos_stable(gamma: float, size: tuple[int, ...], *, work_dtype=torch.float64) -> torch.Tensor:
-            """
-            Positive strictly stable S_γ with Laplace transform E[e^{-λ S_γ}] = exp(-λ^γ), 0<γ<1,
-            via Kanter's algorithm in the log-domain for stability.
-            Returns shape `size` tensor on `device` in `work_dtype`.
-            """
-            # U in (0,1), avoid endpoints (sin(πU)=0)
-            U = torch.rand(*size, device=device, dtype=work_dtype)
-            U = (U * (1.0 - 2e-12)) + 1e-12  # (0,1) open interval
-            E = torch.distributions.Exponential(torch.tensor(1.0, device=device, dtype=work_dtype)).sample(size)
-
-            pi = math.pi
-            eps = torch.finfo(work_dtype).tiny
-
-            # log K_γ = γ log sin(πγU) + (1-γ) log sin(π(1-γ)U) - log sin(πU)
-            log_sin_piU      = torch.log(torch.sin(pi * U).clamp_min(eps))
-            log_sin_gpiU     = torch.log(torch.sin(pi * gamma * U).clamp_min(eps))
-            log_sin_1mgpiU   = torch.log(torch.sin(pi * (1.0 - gamma) * U).clamp_min(eps))
-            logK = gamma * (log_sin_gpiU - log_sin_piU) + (1.0 - gamma) * (log_sin_1mgpiU - log_sin_piU)
-
-            logE = torch.log(E.clamp_min(eps))
-            # S_γ = [ K_γ / E^{1-γ} ]^{1/γ}
-            logS = (logK - (1.0 - gamma) * logE) / gamma
-            return torch.exp(logS)
-
-        def _sample(shape):
-            # Work in float64 for the mixing variable; output in default dtype.
-            out_dtype = torch.get_default_dtype()
-
-            # Treat the first axis as batch. One V per batch sample → isotropic SαS over the remaining dims.
-            if len(shape) == 0:
-                batch = 1
-                expand_shape = ()
-            else:
-                batch = shape[0]
-                expand_shape = (batch,) + (1,) * (len(shape) - 1)
-
-            # g ~ N(0, I) with target dtype
-            g = torch.randn(*shape, device=device, dtype=out_dtype)
-
-            # V ~ S_{α/2} (positive-stable), then scale = sqrt(2 V)
-            V = _pos_stable(gamma, (batch,), work_dtype=torch.float64)
-            scale = torch.sqrt(2.0 * V).to(out_dtype).view(expand_shape)
-
-            return g * scale
-
-        return _sample
-
+  
     raise ValueError(f"Unknown baseline latent '{name}'")
 
 

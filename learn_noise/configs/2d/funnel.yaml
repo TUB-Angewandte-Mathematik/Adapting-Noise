@@ -17,6 +17,12 @@ use_minibatch_ot: false
 baseline_latent: gaussian
 baseline_flow: linear
 baseline_flow_T: 1.0
+student_t_df:
+  - 20.0
+  - 4.0
+student_t_scale:
+  - 1.0
+  - 1.0
 quantile_checkpoint: null
 freeze_quantile: true 
 eval_step: 10000

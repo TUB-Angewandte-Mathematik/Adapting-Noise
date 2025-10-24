@@ -54,7 +54,7 @@ Default hyper-parameters are defined in the YAML configs under `learn_noise/conf
 
 
 ## Project Structure
-
+The main training file is `train_fm_quantile.py`. The general structure is as follows.
 ```
 Learn-Noise/
 ├── learn_noise/                      # Python package with training and evaluation code
