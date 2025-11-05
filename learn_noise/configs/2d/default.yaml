@@ -48,8 +48,8 @@ q_ot_epsilon: 1.0
 q_objective: plan_action
 lambda_reg: 0.0
 metric: ot
-q_rqs_bins: 16
-q_rqs_bound: 5.0
+q_rqs_bins: 32
+q_rqs_bound: 50.0
 q_rqs_layers: 3
 image_shape: null
 runs_dir: null
