@@ -285,7 +285,7 @@ def train_fm_baseline(
             if use_minibatch_ot:
                 idx_best, transport_plan = minibatch_ot_pairing(x_0, z)
                 x_0 = x_0[idx_best]
-                z = z[idx_best]
+          
                 pairing_cost = transport_plan.max(dim=0).values.mean()
             x_t = (1.0 - t) * x_0 + t * z
             velocity_target = -x_0 + z
